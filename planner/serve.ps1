@@ -49,6 +49,9 @@ $mime = @{
   ".webmanifest" = "application/manifest+json; charset=utf-8"
   ".svg"         = "image/svg+xml"
   ".png"         = "image/png"
+  ".wav"         = "audio/wav"
+  ".mp3"         = "audio/mpeg"
+  ".ogg"         = "audio/ogg"
   ".ico"         = "image/x-icon"
   ".txt"         = "text/plain; charset=utf-8"
   ".md"          = "text/markdown; charset=utf-8"
@@ -95,11 +98,12 @@ try {
     $ext = [System.IO.Path]::GetExtension($resolved).ToLowerInvariant()
     $response.ContentType = if ($mime.ContainsKey($ext)) { $mime[$ext] } else { "application/octet-stream" }
     $response.Headers["Cache-Control"] = "no-store"
+    $isHead = ($request.HttpMethod -eq "HEAD")
 
     try {
       $bytes = [System.IO.File]::ReadAllBytes($resolved)
       $response.ContentLength64 = $bytes.Length
-      $response.OutputStream.Write($bytes, 0, $bytes.Length)
+      if (-not $isHead) { $response.OutputStream.Write($bytes, 0, $bytes.Length) }
     } catch {
       $response.StatusCode = 500
     } finally {

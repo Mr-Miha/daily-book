@@ -42,6 +42,8 @@
   const DEFAULT_TIME = "09:00";
   const CHECK_INTERVAL_MS = 30 * 1000;
   const CATCHUP_MS = 24 * 60 * 60 * 1000; // догоняем пропущенные за сутки
+  const SOUND_PATH = "sounds/crow.wav"; // карканье вороны
+  const NATIVE_CHANNEL_ID = "planner-alerts-v1"; // канал уведомлений (Android)
 
   // ------------------------------------------------------------------ утилиты
 
@@ -101,6 +103,7 @@
   const state = {
     selectedDate: todayISO(),
     viewMonth: null, // Date, первое число отображаемого месяца
+    sound: true, // звук карканья при напоминании
   };
 
   function loadState() {
@@ -116,6 +119,9 @@
       const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
       if (typeof saved.selectedDate === "string") {
         state.selectedDate = saved.selectedDate;
+      }
+      if (typeof saved.sound === "boolean") {
+        state.sound = saved.sound;
       }
     } catch (err) {
       console.warn("Не удалось прочитать настройки:", err);
@@ -138,7 +144,7 @@
     try {
       localStorage.setItem(
         SETTINGS_KEY,
-        JSON.stringify({ selectedDate: state.selectedDate }),
+        JSON.stringify({ selectedDate: state.selectedDate, sound: state.sound }),
       );
     } catch (err) {
       console.warn(err);
@@ -259,6 +265,34 @@
     return `${entry.id}|${isoOf(when)}|${entry.time || DEFAULT_TIME}`;
   }
 
+  // ------------------------------------------------------------------ звук
+
+  let crowAudioEl = null;
+
+  /**
+   * Проигрывает карканье вороны.
+   * Браузер разрешает воспроизведение только после действия пользователя
+   * на странице, поэтому ошибку «автозапуск заблокирован» гасим молча.
+   */
+  function playCrowSound() {
+    if (!state.sound) return;
+    try {
+      if (!crowAudioEl) {
+        crowAudioEl = new Audio(SOUND_PATH);
+        crowAudioEl.preload = "auto";
+      }
+      crowAudioEl.currentTime = 0;
+      const started = crowAudioEl.play();
+      if (started && typeof started.catch === "function") {
+        started.catch(() => {
+          console.info("Звук заблокирован до первого нажатия на странице.");
+        });
+      }
+    } catch (err) {
+      console.warn("Не удалось проиграть звук:", err);
+    }
+  }
+
   // ------------------------------------------------------- уведомления (веб)
 
   function webNotificationsSupported() {
@@ -294,6 +328,7 @@
   }
 
   async function showWebNotification(entry, when) {
+    playCrowSound(); // звук работает в приложении; системный звук уведомления браузер не заменяет
     if (!notificationGranted()) return;
     const title = entry.title;
     const body = entry.note
@@ -320,12 +355,14 @@
       const plugin = localNotifications();
       if (plugin) {
         try {
+          await ensureNativeChannel();
           await plugin.schedule({
             notifications: [
               {
                 id: hashId(`${entry.id}|${when.toISOString()}`),
                 title: entry.title,
                 body: entry.note || "Напоминание из ежедневника",
+                channelId: NATIVE_CHANNEL_ID,
                 schedule: { at: new Date(Date.now() + 1500) },
                 extra: { entryId: entry.id },
               },
@@ -353,6 +390,30 @@
   }
 
   /**
+   * Создаёт канал уведомлений Android со звуком карканья.
+   * Важно: звук канала фиксируется при создании и меняется только после
+   * переустановки приложения — поэтому у канала версионный id.
+   * Файл crow.wav должен лежать в android/app/src/main/res/raw/.
+   */
+  async function ensureNativeChannel() {
+    const plugin = localNotifications();
+    if (!plugin || typeof plugin.createChannel !== "function") return;
+    try {
+      await plugin.createChannel({
+        id: NATIVE_CHANNEL_ID,
+        name: "Напоминания ежедневника",
+        description: "Карканье вороны в назначенное время",
+        sound: "crow.wav",
+        importance: 4,
+        vibration: true,
+        visibility: 1,
+      });
+    } catch (err) {
+      console.warn("Канал уведомлений не создан:", err);
+    }
+  }
+
+  /**
    * Перепланирует все системные уведомления (только в нативной сборке).
    * Для повторяющихся записей создаёт расписание на 20 ближайших срабатываний.
    */
@@ -360,6 +421,8 @@
     if (!isNative()) return;
     const plugin = localNotifications();
     if (!plugin) return;
+
+    await ensureNativeChannel();
 
     try {
       const pending = await plugin.getPending();
@@ -382,6 +445,7 @@
           id: hashId(`${entry.id}|${when.toISOString()}`),
           title: entry.title,
           body: entry.note || "Напоминание из ежедневника",
+          channelId: NATIVE_CHANNEL_ID,
           schedule: { at: when, allowWhileIdle: true },
           extra: { entryId: entry.id },
         });
@@ -425,7 +489,8 @@
 
     if (!due.length) return;
 
-    if (!notificationGranted() && !isNative()) return;
+    // Если уведомления запрещены, но звук включён — каркаем как резервный сигнал.
+    if (!isNative() && !notificationGranted() && !state.sound) return;
     if (isNative() && !localNotifications()) return;
 
     if (due.length > 3) {
@@ -787,6 +852,30 @@
     toast("Тестовое уведомление отправлено");
   });
 
+  // ------------------------------------------------------------- звук: кнопка
+
+  const soundBtn = document.getElementById("soundBtn");
+  const soundBtnLabel = document.getElementById("soundBtnLabel");
+  const soundIcon = document.getElementById("soundIcon");
+
+  function updateSoundButton() {
+    soundBtn.setAttribute("aria-pressed", String(state.sound));
+    soundBtnLabel.textContent = state.sound ? "Звук" : "Без звука";
+    soundIcon.textContent = state.sound ? "🔊" : "🔇";
+  }
+
+  soundBtn.addEventListener("click", () => {
+    state.sound = !state.sound;
+    saveSettings();
+    updateSoundButton();
+    if (state.sound) {
+      playCrowSound();
+      toast("Звук включён: карканье вороны");
+    } else {
+      toast("Звук выключен");
+    }
+  });
+
   // ------------------------------------------------------------ экспорт/импорт
 
   document.getElementById("exportBtn").addEventListener("click", () => {
@@ -908,6 +997,7 @@
     loadState();
     renderAll();
     updateNotifyLabel();
+    updateSoundButton();
     updateInstallButton();
     registerServiceWorker();
     startScheduler();
