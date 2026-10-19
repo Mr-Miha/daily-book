@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <title>Ежедневник</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#2563eb" />
+  <link rel="canonical" href="./planner/" />
+  <meta http-equiv="refresh" content="0; url=./planner/" />
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #f4f6fb;
+      color: #0f172a;
+      font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      text-align: center;
+    }
+    a { color: #2563eb; }
+  </style>
+</head>
+<body>
+  <!-- Эта страница нужна только для GitHub Pages: она перенаправляет
+       на само приложение в подпапке planner/. Локальный запуск идёт
+       через planner/serve.ps1, поэтому здесь ничего не запускается. -->
+  <p>Открываем ежедневник…<br />
+    Если переход не произошёл, <a href="./planner/">нажмите сюда</a>.</p>
+  <script>location.replace("./planner/");</script>
+</body>
+</html>
