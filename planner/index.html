@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="description" content="Ежедневник с календарём и напоминаниями" />
+  <meta name="theme-color" content="#2563eb" />
+  <title>Ежедневник</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="app-header__brand">
+      <span class="app-header__logo" aria-hidden="true">📔</span>
+      <div>
+        <h1 class="app-header__title">Ежедневник</h1>
+        <p class="app-header__subtitle" id="headerSubtitle">Планы, дела и напоминания</p>
+      </div>
+    </div>
+
+    <div class="app-header__actions">
+      <button type="button" class="btn btn--ghost" id="notifyBtn" title="Разрешить уведомления или отправить тестовое">
+        <span aria-hidden="true">🔔</span>
+        <span class="btn__label" id="notifyBtnLabel">Уведомления</span>
+      </button>
+      <button type="button" class="btn btn--ghost" id="installBtn" title="Установить приложение" hidden>
+        <span aria-hidden="true">📲</span>
+        <span class="btn__label">Установить</span>
+      </button>
+      <button type="button" class="btn btn--ghost" id="exportBtn" title="Скачать резервную копию">
+        <span aria-hidden="true">⤓</span>
+        <span class="btn__label">Экспорт</span>
+      </button>
+      <button type="button" class="btn btn--ghost" id="importBtn" title="Загрузить резервную копию">
+        <span aria-hidden="true">⤒</span>
+        <span class="btn__label">Импорт</span>
+      </button>
+      <input type="file" id="importInput" accept="application/json,.json" hidden />
+    </div>
+  </header>
+
+  <main class="app-main">
+    <!-- Календарь -->
+    <section class="panel calendar-panel" aria-label="Календарь">
+      <div class="calendar__head">
+        <button type="button" class="icon-btn" id="prevMonth" aria-label="Предыдущий месяц">‹</button>
+        <button type="button" class="calendar__title" id="monthTitle" title="Перейти к сегодняшнему дню"></button>
+        <button type="button" class="icon-btn" id="nextMonth" aria-label="Следующий месяц">›</button>
+      </div>
+
+      <div class="calendar__weekdays" aria-hidden="true">
+        <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+      </div>
+      <div class="calendar__grid" id="calendarGrid" role="group" aria-label="Дни месяца"></div>
+
+      <div class="calendar__footer">
+        <button type="button" class="btn btn--soft" id="todayBtn">Сегодня</button>
+        <span class="calendar__legend">
+          <span class="dot dot--entry" aria-hidden="true"></span> записи
+          <span class="dot dot--remind" aria-hidden="true"></span> напоминания
+        </span>
+      </div>
+    </section>
+
+    <!-- Записи выбранного дня -->
+    <section class="panel day-panel" aria-label="Записи дня">
+      <div class="day-panel__head">
+        <div>
+          <h2 class="day-panel__date" id="dayTitle">Сегодня</h2>
+          <p class="day-panel__count" id="dayCount"></p>
+        </div>
+        <button type="button" class="btn btn--primary" id="addBtn">
+          <span aria-hidden="true">＋</span> Добавить
+        </button>
+      </div>
+
+      <ul class="entry-list" id="entryList"></ul>
+      <p class="empty-state" id="emptyState" hidden>
+        На этот день пока ничего не запланировано.<br />
+        Нажмите «Добавить», чтобы создать первую запись.
+      </p>
+    </section>
+  </main>
+
+  <!-- Форма записи -->
+  <dialog class="dialog" id="entryDialog">
+    <form method="dialog" class="dialog__form" id="entryForm">
+      <h2 class="dialog__title" id="dialogTitle">Новая запись</h2>
+
+      <label class="field">
+        <span class="field__label">Дата</span>
+        <input type="date" id="fieldDate" name="date" required />
+      </label>
+
+      <label class="field">
+        <span class="field__label">Время <small>(необязательно)</small></span>
+        <input type="time" id="fieldTime" name="time" />
+      </label>
+
+      <label class="field">
+        <span class="field__label">Название</span>
+        <input type="text" id="fieldTitle" name="title" maxlength="120" placeholder="Что нужно сделать?" required />
+      </label>
+
+      <label class="field">
+        <span class="field__label">Заметка <small>(необязательно)</small></span>
+        <textarea id="fieldNote" name="note" rows="3" maxlength="2000" placeholder="Подробности, адрес, ссылка…"></textarea>
+      </label>
+
+      <label class="field">
+        <span class="field__label">Повтор</span>
+        <select id="fieldRepeat" name="repeat">
+          <option value="none">Без повтора</option>
+          <option value="daily">Каждый день</option>
+          <option value="weekly">Каждую неделю</option>
+          <option value="monthly">Каждый месяц</option>
+          <option value="yearly">Каждый год</option>
+        </select>
+      </label>
+
+      <label class="checkbox">
+        <input type="checkbox" id="fieldRemind" name="remind" />
+        <span>Напомнить в указанное время</span>
+      </label>
+
+      <p class="dialog__hint" id="remindHint"></p>
+
+      <div class="dialog__actions">
+        <button type="button" class="btn btn--ghost" id="cancelBtn">Отмена</button>
+        <button type="submit" class="btn btn--primary" id="saveBtn">Сохранить</button>
+      </div>
+    </form>
+  </dialog>
+
+  <template id="entryTemplate">
+    <li class="entry">
+      <button type="button" class="entry__check" aria-label="Отметить выполненным" aria-pressed="false"></button>
+      <div class="entry__body">
+        <div class="entry__top">
+          <span class="entry__time"></span>
+          <span class="entry__title"></span>
+        </div>
+        <p class="entry__note"></p>
+        <div class="entry__meta"></div>
+      </div>
+      <div class="entry__actions">
+        <button type="button" class="icon-btn entry__edit" title="Изменить" aria-label="Изменить">✎</button>
+        <button type="button" class="icon-btn entry__delete" title="Удалить" aria-label="Удалить">✕</button>
+      </div>
+    </li>
+  </template>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="app.js" defer></script>
+</body>
+</html>

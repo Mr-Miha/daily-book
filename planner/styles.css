@@ -1,0 +1,503 @@
+/* Ежедневник — оформление. Без внешних зависимостей. */
+
+:root {
+  --bg: #f4f6fb;
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
+  --text: #0f172a;
+  --muted: #64748b;
+  --faint: #6b7688;
+  --border: #e2e8f0;
+  --accent: #2563eb;
+  --accent-soft: #dbeafe;
+  --accent-strong: #1d4ed8;
+  --on-accent: #ffffff;
+  --danger: #dc2626;
+  --danger-soft: #fee2e2;
+  --success: #16a34a;
+  --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  --radius: 16px;
+  --radius-sm: 10px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b1220;
+    --surface: #111a2b;
+    --surface-2: #16213a;
+    --text: #e8eefc;
+    --muted: #93a4c3;
+    --faint: #7f8ea8;
+    --border: #22304d;
+    --accent: #60a5fa;
+    --accent-soft: #1e3a8a;
+    --accent-strong: #93c5fd;
+    --on-accent: #0b1220;
+    --danger: #f87171;
+    --danger-soft: #451a1a;
+    --success: #4ade80;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+h1, h2, p { margin: 0; }
+
+button, input, select, textarea { font: inherit; color: inherit; }
+
+/* ---------- Кнопки ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s, transform 0.05s;
+}
+
+.btn:active { transform: translateY(1px); }
+
+/* Класс .btn задаёт display и перебивает браузерное [hidden] — возвращаем скрытие. */
+.btn[hidden] { display: none; }
+
+.btn--primary {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+.btn--primary:hover { background: var(--accent-strong); }
+
+.btn--soft {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+
+.btn--ghost {
+  background: transparent;
+  border-color: var(--border);
+}
+.btn--ghost:hover { background: var(--surface-2); }
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text);
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.icon-btn:hover { background: var(--surface-2); }
+
+/* ---------- Шапка ---------- */
+
+.app-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 1.1rem 1rem 0.75rem;
+  padding-top: max(1.1rem, env(safe-area-inset-top));
+}
+
+.app-header__brand { display: flex; align-items: center; gap: 0.7rem; }
+
+.app-header__logo {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: var(--accent-soft);
+  font-size: 1.5rem;
+}
+
+.app-header__title { font-size: 1.35rem; letter-spacing: -0.01em; }
+.app-header__subtitle { color: var(--muted); font-size: 0.85rem; }
+
+.app-header__actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+/* ---------- Сетка ---------- */
+
+.app-main {
+  display: grid;
+  grid-template-columns: minmax(300px, 380px) 1fr;
+  gap: 1rem;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0.5rem 1rem 2rem;
+  align-items: start;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1rem;
+}
+
+/* ---------- Календарь ---------- */
+
+.calendar__head {
+  display: grid;
+  grid-template-columns: 38px 1fr 38px;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.6rem;
+}
+
+.calendar__title {
+  border: none;
+  background: transparent;
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  cursor: pointer;
+  padding: 0.35rem;
+  border-radius: var(--radius-sm);
+}
+.calendar__title:hover { background: var(--surface-2); }
+
+.calendar__weekdays,
+.calendar__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.calendar__weekdays span {
+  text-align: center;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  padding: 0.25rem 0;
+}
+
+.day-cell {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  min-height: 38px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.92rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.day-cell:hover { background: var(--surface-2); }
+
+.day-cell--other { color: var(--faint); }
+
+.day-cell--today {
+  border-color: var(--accent);
+  font-weight: 700;
+}
+
+.day-cell--selected {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+}
+.day-cell--selected:hover { background: var(--accent); }
+
+.day-cell__dots {
+  position: absolute;
+  bottom: 5px;
+  display: flex;
+  gap: 3px;
+}
+
+.dot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.dot--entry { background: var(--accent); opacity: 0.55; }
+.dot--remind { background: var(--success); }
+
+.day-cell--selected .dot { background: var(--on-accent); }
+
+.calendar__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.calendar__legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+.calendar__legend .dot { opacity: 1; }
+.calendar__legend .dot--entry { background: var(--accent); opacity: 0.55; }
+
+/* ---------- Панель дня ---------- */
+
+.day-panel__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0.5rem;
+}
+
+.day-panel__date {
+  font-size: 1.1rem;
+  line-height: 1.3;
+}
+
+.day-panel__count { color: var(--muted); font-size: 0.82rem; }
+
+.entry-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.entry {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.7rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.entry--done .entry__title { text-decoration: line-through; color: var(--muted); }
+
+.entry__check {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  margin-top: 2px;
+  border: 2px solid var(--muted);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+}
+.entry__check[aria-pressed="true"] {
+  background: var(--success);
+  border-color: var(--success);
+}
+.entry__check[aria-pressed="true"]::after {
+  content: "✓";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+.entry__body { flex: 1 1 auto; min-width: 0; }
+
+.entry__top { display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap; }
+
+.entry__time {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 0.9rem;
+}
+.entry__time:empty { display: none; }
+
+.entry__title { font-weight: 600; overflow-wrap: anywhere; }
+
+.entry__note {
+  margin-top: 0.2rem;
+  color: var(--muted);
+  font-size: 0.86rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.entry__note:empty { display: none; }
+
+.entry__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+}
+.entry__meta:empty { display: none; }
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+.tag--remind { background: rgba(22, 163, 74, 0.14); color: var(--success); }
+.tag--overdue { background: var(--danger-soft); color: var(--danger); }
+
+.entry__actions { display: flex; gap: 0.1rem; flex: 0 0 auto; }
+.entry__actions .icon-btn { width: 32px; height: 32px; font-size: 0.95rem; color: var(--muted); }
+.entry__actions .icon-btn:hover { color: var(--text); }
+.entry__delete:hover { color: var(--danger); background: var(--danger-soft); }
+
+.empty-state {
+  text-align: center;
+  color: var(--muted);
+  padding: 2.2rem 1rem;
+  font-size: 0.92rem;
+}
+
+/* ---------- Диалог ---------- */
+
+.dialog {
+  border: none;
+  border-radius: 18px;
+  padding: 0;
+  background: var(--surface);
+  color: var(--text);
+  max-width: 460px;
+  width: calc(100% - 2rem);
+  box-shadow: 0 30px 80px rgba(2, 6, 23, 0.45);
+}
+
+.dialog::backdrop { background: rgba(2, 6, 23, 0.45); backdrop-filter: blur(2px); }
+
+.dialog__form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding: 1.2rem;
+}
+
+.dialog__title { font-size: 1.15rem; }
+
+.field { display: flex; flex-direction: column; gap: 0.3rem; }
+
+.field__label { font-size: 0.82rem; font-weight: 600; color: var(--muted); }
+.field__label small { font-weight: 400; }
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  outline: none;
+}
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.field textarea { resize: vertical; }
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  cursor: pointer;
+}
+.checkbox input { width: 18px; height: 18px; accent-color: var(--accent); }
+
+.dialog__hint { color: var(--muted); font-size: 0.78rem; min-height: 1.1em; }
+
+.dialog__actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.2rem; }
+
+/* ---------- Уведомление-тост ---------- */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: max(1.2rem, env(safe-area-inset-bottom));
+  transform: translate(-50%, 20px);
+  background: #0f172a;
+  color: #fff;
+  padding: 0.65rem 1rem;
+  border-radius: 999px;
+  font-size: 0.86rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+  z-index: 50;
+  max-width: calc(100% - 2rem);
+  text-align: center;
+}
+.toast--show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---------- Адаптив ---------- */
+
+@media (max-width: 820px) {
+  .app-main { grid-template-columns: 1fr; }
+  .calendar-panel { order: 1; }
+  .day-panel { order: 2; }
+  .app-header { padding-bottom: 0.4rem; }
+  .btn__label { display: none; }
+  .app-header__actions .btn { padding: 0.5rem 0.6rem; }
+}
+
+@media (min-width: 821px) {
+  .calendar-panel { position: sticky; top: 1rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
